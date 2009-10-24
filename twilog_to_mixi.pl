@@ -13,6 +13,7 @@ use URI;
 use LWP::UserAgent;
 use LWP::Authen::Wsse;
 use HTTP::Request::Common;
+use HTML::Entities;
 use HTML::Template;
 use Web::Scraper;
 
@@ -43,8 +44,11 @@ my $uri = URI->new("http://twilog.org/$twitter_id/date-$date/asc-nomen");
 my $scraper = scraper {
     process '//h3[@class="bar-main2"]/text()', 'title' => 'TEXT';
     process '.tl-tweet', 'tweet[]' => scraper {
-        process '.tl-text',     'text' => 'TEXT';
-        process '.tl-posted>a', 'time' => 'TEXT';
+	process '.tl-text',     'text' => ['TEXT', sub {
+	    encode_entities($_, '&');
+	    s/\x{ff5e}/\x{301c}/g;
+	}];
+	process '.tl-posted>a', 'time' => 'TEXT';
     };
 };
 my $result = $scraper->scrape($uri);
