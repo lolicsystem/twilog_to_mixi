@@ -1,0 +1,11 @@
+This is a perl script that aggregates your daily tweets by using the web
+service named twilog, and post it as a diary of mixi.
+Please refer to the following for details. (written in Japanese)
+http://d.hatena.ne.jp/lolicsystem/20090926/1253931843
+
+
+
+これは、twitter での1日分のつぶやきを、twilog を用いて収集し、それを
+mixi の日記として投稿する Perl スクリプトです。
+詳細は以下を参照して下さい。
+http://d.hatena.ne.jp/lolicsystem/20090926/1253931843
