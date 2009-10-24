@@ -7,6 +7,7 @@
 use strict;
 use warnings;
 use utf8;
+use Config::Pit;
 use DateTime;
 use Encode;
 use URI;
@@ -18,15 +19,28 @@ use HTML::Template;
 use Web::Scraper;
 
 #
-# Your personal data
+# get id & pw from pit.
 #
-my $twitter_id     = 'lolicsystem';       #ご自分のに変えて下さい
-my $mixi_auth_id   = '●●●●@●●●●'; #ご自分のに変えて下さい
-my $mixi_password  = '●●●●';          #ご自分のに変えて下さい
-my $mixi_member_id = 123578;              #ご自分のに変えて下さい
-my $footer =<< '_FOOTEREND_';
+my $config_twitter = pit_get("twitter.com" , require => {
+    "username" => "your username on twitter",
+});
+my $config_mixi = pit_get("mixi.jp" , require => {
+    "email"    => "your email address registered in mixi",
+    "password" => "your password",
+    "userid"   => "your userid number",
+});
+die 'pit_get failed.' if !%$config_twitter || !%$config_mixi;
+my $twitter_id     = $config_twitter->{username} or die $!;
+my $mixi_auth_id   = $config_mixi->{email} or die $!;
+my $mixi_password  = $config_mixi->{password} or die $!;
+my $mixi_member_id = $config_mixi->{userid} or die $!;
+
+#
+# set footer
+#
+my $footer =<< "_FOOTEREND_";
 --------
-※ これは、僕のTwitterでのつぶやき(http://twitter.com/lolicsystem)を
+※ これは、僕のTwitterでのつぶやき(http://twitter.com/$twitter_id)を
 ついろぐ(http://twilog.org/)で日ごとにまとめ、
 それをmixi投稿APIを用いて投稿したものです。
 
@@ -44,11 +58,11 @@ my $uri = URI->new("http://twilog.org/$twitter_id/date-$date/asc-nomen");
 my $scraper = scraper {
     process '//h3[@class="bar-main2"]/text()', 'title' => 'TEXT';
     process '.tl-tweet', 'tweet[]' => scraper {
-	process '.tl-text',     'text' => ['TEXT', sub {
-	    encode_entities($_, '&');
-	    s/\x{ff5e}/\x{301c}/g;
-	}];
-	process '.tl-posted>a', 'time' => 'TEXT';
+        process '.tl-text',     'text' => ['TEXT', sub {
+            encode_entities($_, '&');
+            s/\x{ff5e}/\x{301c}/g;
+        }];
+        process '.tl-posted>a', 'time' => 'TEXT';
     };
 };
 my $result = $scraper->scrape($uri);
@@ -72,7 +86,6 @@ my $res = $ua->post(
                     'content'      => encode('utf8', $template->output())
                     );
 warn $res->content unless $res->code == 201;
-
 
 __DATA__
 <?xml version='1.0' encoding='utf-8'?>
